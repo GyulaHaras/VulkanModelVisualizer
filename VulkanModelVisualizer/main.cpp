@@ -1,7 +1,8 @@
 #include <iostream>
-#include "ModelTextParser.h"
+// #include "ModelTextParser.h"
 extern "C" {
 	#include "mock.h"
+	#include "ModelTextParser.h"
 }
 
 int main() {

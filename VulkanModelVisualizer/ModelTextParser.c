@@ -7,8 +7,6 @@
 #define MAX_LINE_LENGTH 1024
 #define BLOCK_SIZE 10
 
-using namespace std;
-
 union vec3 {
 	struct {
 		float x, y, z;
@@ -21,7 +19,7 @@ void print_objModel() {
 	errno_t file_read_error;
 	FILE* file_ptr;
 
-	file_read_error = fopen_s(&file_ptr, "models/teapot.obj", "r");
+	file_read_error = fopen_s(&file_ptr, "models/cube.obj", "r");
 	if (file_read_error) {
 		printf("File read failed.\n");
 		return;
@@ -30,21 +28,21 @@ void print_objModel() {
 	char line[MAX_LINE_LENGTH];
 	rsize_t line_length = sizeof line;
 	const char* delim = " ";
-	char* next_token = nullptr;
+	char* next_token = NULL;
 	float token_f = 0.0;
 	char* endptr;
-	vec3 vertex_position = { 0.0,0.0,0.0 };
+	union vec3 vertex_position = { 0.0,0.0,0.0 };
 	int direction = 0;
 
-	vec3* vertices;
+	union vec3* vertices;
 	int vertices_length = 0;
 	rsize_t vertices_current_size = 0;
-	rsize_t vertices_alloc_size = sizeof(vec3) * BLOCK_SIZE;
+	rsize_t vertices_alloc_size = sizeof(union vec3) * BLOCK_SIZE;
 
 	if (file_ptr) {
 		printf("File found.\n");
 		char* token = NULL;
-		vertices = (vec3*)malloc(vertices_alloc_size);
+		vertices = malloc(vertices_alloc_size);
 		while (fgets(line, MAX_LINE_LENGTH, file_ptr)) {
 			token = strtok_s(line, delim, &next_token);
 			
@@ -66,12 +64,12 @@ void print_objModel() {
 						direction = ++direction % 3;
 						// if the direction resets to 0, the vec3 struction has been filled and can be pushed to the vertices array
 						if (direction == 0) {
-							if (vertices_current_size + sizeof(vec3) > vertices_alloc_size) {
+							if (vertices_current_size + sizeof(union vec3) > vertices_alloc_size) {
 								// Increase allocation size
-								vertices_alloc_size += sizeof(vec3) * BLOCK_SIZE;
-								vec3* tmp_vertices = vertices;
+								vertices_alloc_size += sizeof(union vec3) * BLOCK_SIZE;
+								union vec3* tmp_vertices = vertices;
 
-								vertices = (vec3*)realloc(vertices, vertices_alloc_size);
+								vertices = realloc(vertices, vertices_alloc_size);
 								if (vertices == NULL) {
 									free(tmp_vertices);
 									printf("ERROR: Unable to reallocate more memory.");
@@ -82,7 +80,7 @@ void print_objModel() {
 
 							vertices[vertices_length++] = vertex_position;
 							// update the held size
-							vertices_current_size += sizeof(vec3);
+							vertices_current_size += sizeof(union vec3);
 						}
 					}
 					printf("%s ", token);

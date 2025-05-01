@@ -132,7 +132,7 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mock.c" />
-    <ClCompile Include="ModelTextParser.cpp" />
+    <ClCompile Include="ModelTextParser.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mock.h" />
