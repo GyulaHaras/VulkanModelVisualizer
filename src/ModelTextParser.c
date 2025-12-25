@@ -51,32 +51,21 @@ typedef union vec3 {
 	float xyz[3];
 } vec3;
 
-void parse_vector(float* vector, int vec_size, char** token) {
+void parse_vector(float* vector, int vec_size, char** next_token) {
 	// char* token = NULL;
 	char* endptr;
-	char* text = "";
+	char* token = "";
 	float value = 0.0;
 	// vec3 v = { 0.0,0.0,0.0 };
 							
 	for (int ijk = 0; ijk < vec_size; ijk++) {
-		text = strtok_tsafe(NULL, " ", token);
-		value = strtof(text, &endptr);
+		token = strtok_tsafe(NULL, " ", next_token);
+		value = strtof(token, &endptr);
 		vector[ijk] = value;
 		value = strtof(endptr, &endptr);
 		// TODO: need to call strtok again here to get the next float in the line.
 	}
 }
-
-// TODO: There is no point in having an almost identical function for parsing a similar struct
-//vec2 parse_uv(char** text){
-//	char* endptr;
-//	float value = 0.0;
-//	vec2 uv = { 0.0, 0.0 };
-//	for (int ij = 0; ij < 2; ij++) {
-//		uv.xy[ij] = value;
-//	}
-//	return uv;
-//}
 
 void print_objModel() {
 	 printf("Parsing .obj file...\n");
@@ -115,9 +104,10 @@ void print_objModel() {
 			// 1 or 2 characterss are expected before the first space. Additionally, 
 			// there could be an overhead cost for reinitializing the strtok pointer 
 			// for every new line.
-
-			token = strtok_tsafe(line, delim, &next_token);
 			
+			// Initializing the first token in the line string and vector variables to put in parsed values
+			token = strtok_tsafe(line, delim, &next_token);
+			vec3 vertex = {0.0, 0.0, 0.0};
 			// Check if there is enough space for more vertices, if not realloc
 			printf("%d/%d \n", vertices_current_size, vertices_alloc_size);
 
@@ -130,13 +120,15 @@ void print_objModel() {
 						printf("Vertex Texture: %s ", token);
 					}
 					else if ( strcmp(token, "vn") == 0) {
+						// TODO: Consider if having Vertex Normal logic independent from vertices is necessary.
 						printf("Vertex Normal: %s ", token);
+						parse_vector(vertex.xyz, 3, &next_token);
+						printf("x: %f y: %f z: %f\n", vertex.components.x, vertex.components.y, vertex.components.z);
 					}
 					else {
 						printf("Vertex: %s ", token);
-						// TODO: move strtok logic to inside the vertex parser
+						// TODO: move strtok logic to inside the vertex parser.
 						// token = strtok_tsafe(NULL, delim, &next_token);
-						vec3 vertex = {0.0, 0.0, 0.0};
 						parse_vector(vertex.xyz, 3, &next_token);
 						printf("x: %f y: %f z: %f\n", vertex.components.x, vertex.components.y, vertex.components.z);
 					}
