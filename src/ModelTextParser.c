@@ -108,6 +108,7 @@ void print_objModel() {
 			// Initializing the first token in the line string and vector variables to put in parsed values
 			token = strtok_tsafe(line, delim, &next_token);
 			vec3 vertex = {0.0, 0.0, 0.0};
+			vec2 texture_pos = {0.0, 0.0};
 			// Check if there is enough space for more vertices, if not realloc
 			printf("%d/%d \n", vertices_current_size, vertices_alloc_size);
 
@@ -118,6 +119,8 @@ void print_objModel() {
 				case 'v':
 					if (strcmp(token, "vt") == 0) {
 						printf("Vertex Texture: %s ", token);
+						parse_vector(texture_pos.xy, 2, &next_token);
+						printf("u: %f v: %f\n", texture_pos.components.x, texture_pos.components.y);
 					}
 					else if ( strcmp(token, "vn") == 0) {
 						// TODO: Consider if having Vertex Normal logic independent from vertices is necessary.
