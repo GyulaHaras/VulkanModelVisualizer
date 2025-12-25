@@ -4,8 +4,12 @@
 #include <string.h>
 #include "ModelTextParser.h"
 
+// TODO: For testing only, exclusive use for cube.obj testing case. Consider first pass for figuring out amount of lines of every data type
 #define MAX_LINE_LENGTH 1024
-#define BLOCK_SIZE 10
+#define VERTEX_BLOCK_SIZE 8
+#define NORMAL_BLOCK_SIZE 6
+#define TEX_BLOCK_SIZE 14
+#define FACE_BLOCK_SIZE 12
 
 #ifdef _WIN32
 	typedef errno_t vmv_errno_t;
@@ -88,15 +92,34 @@ void print_objModel() {
 	int direction = 0;
 
 	vec3* vertices = NULL;
+	vec3* normals = NULL;
+	vec2* texture_coords = NULL;
+
 	int* vertices_length = 0;
+
 	vmv_rsize_t vertices_current_size = 0;
-	vmv_rsize_t vertices_alloc_size = sizeof(vec3) * BLOCK_SIZE;
+	//TODO: Consider a different heuristic for vector size, consider a first pass 
+	// through the document for finding number of every type of data
+	vmv_rsize_t vertices_alloc_size = sizeof(vec3) * VERTEX_BLOCK_SIZE;
+	vmv_rsize_t normals_alloc_size = sizeof(vec3) * NORMAL_BLOCK_SIZE;
+	vmv_rsize_t texture_coords_alloc_size = sizeof(vec2) * TEX_BLOCK_SIZE;
 
 	if (file_ptr != NULL) {
 		printf("File found.\n");
 		char* token = NULL;
 		vertices = malloc(vertices_alloc_size);
+		// TODO: Consider the need of independent size for normals
+		normals = malloc(vertices_alloc_size);
+		texture_coords = malloc(normals_alloc_size);
+
 		int step = 1;
+		// Indices for indexing multiple arrays data:
+		// [0]-> Vertices
+		// [1]-> Normals
+		// [2]-> Texture coords
+		// [3]-> Faces
+
+		int indices[4] = {0,0,0,0};
 		while (fgets(line, MAX_LINE_LENGTH, file_ptr)) {
 			printf("%d\n", step++);
 			// TODO: Consider a direct read for the first character without a 
@@ -121,12 +144,20 @@ void print_objModel() {
 						printf("Vertex Texture: %s ", token);
 						parse_vector(texture_pos.xy, 2, &next_token);
 						printf("u: %f v: %f\n", texture_pos.components.x, texture_pos.components.y);
+						int i = indices[0];
+						texture_coords[i] = texture_pos;
+						printf("New vertex {%f,%f} added to pos[%d]\n",texture_coords[i].components.x,texture_coords[i].components.y, indices[2]);
+						indices[2]++;
 					}
 					else if ( strcmp(token, "vn") == 0) {
 						// TODO: Consider if having Vertex Normal logic independent from vertices is necessary.
 						printf("Vertex Normal: %s ", token);
 						parse_vector(vertex.xyz, 3, &next_token);
 						printf("x: %f y: %f z: %f\n", vertex.components.x, vertex.components.y, vertex.components.z);
+						int i = indices[1];
+						normals[i] = vertex;
+						printf("New Normal vector {%f,%f,%f} added to pos[%d]\n",normals[i].components.x,normals[i].components.y,normals[i].components.z,indices[1]);
+						indices[1]++;
 					}
 					else {
 						printf("Vertex: %s ", token);
@@ -134,6 +165,10 @@ void print_objModel() {
 						// token = strtok_tsafe(NULL, delim, &next_token);
 						parse_vector(vertex.xyz, 3, &next_token);
 						printf("x: %f y: %f z: %f\n", vertex.components.x, vertex.components.y, vertex.components.z);
+						int i = indices[0];
+						vertices[i] = vertex;
+						printf("New vertex {%f,%f,%f} added to pos[%d]\n",vertices[i].components.x,vertices[i].components.y,vertices[i].components.z,indices[0]);
+						indices[0]++;
 					}
 					break;
 				case 'f':
