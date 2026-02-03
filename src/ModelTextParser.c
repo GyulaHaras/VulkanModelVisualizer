@@ -11,6 +11,12 @@
 #define TEX_BLOCK_SIZE 14
 #define FACE_BLOCK_SIZE 12
 
+// // Teapot .obj model
+// #define VERTEX_BLOCK_SIZE 3366
+// #define NORMAL_BLOCK_SIZE 6
+// #define TEX_BLOCK_SIZE 14
+// #define FACE_BLOCK_SIZE 6319
+
 #ifdef _WIN32
 	typedef errno_t vmv_errno_t;
 	typedef rsize_t vmv_rsize_t;
