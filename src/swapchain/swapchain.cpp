@@ -79,7 +79,7 @@ VkExtent2D Swapchain::chooseExtent(const VkSurfaceCapabilitiesKHR& capabilities,
 }
 
 void Swapchain::createImageViews(){
-    imageViews.resize(imageViews.size());
+    imageViews.resize(images.size());
 
     for(size_t i=0; i < imageViews.size(); i++){
         VkImageViewCreateInfo createInfo{};
@@ -108,10 +108,10 @@ void Swapchain::createImageViews(){
     }
 }
 
-// For minimal declaration
-Swapchain::Swapchain():
-    swapChain(VK_NULL_HANDLE)
-{};
+// // For minimal declaration
+// Swapchain::Swapchain():
+//     swapChain(VK_NULL_HANDLE)
+// {};
 
 Swapchain::Swapchain(
     VkPhysicalDevice physDev,
@@ -124,8 +124,9 @@ Swapchain::Swapchain(
     device(dev),
     surface(surf),
     queueIndices(indices),
-    window(win),
-    swapChain(VK_NULL_HANDLE){}
+    window(win)
+    //swapChain(VK_NULL_HANDLE)
+{}
 
 Swapchain::~Swapchain(){
     if(swapChain != VK_FALSE){
@@ -190,6 +191,11 @@ void Swapchain::createSwapchain(){
         throw std::runtime_error("Failed to create Swapchain.");
     }
 
+    VkResult swapchainImagesResult = vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
+    if(swapchainImagesResult != VK_SUCCESS){
+        throw std::runtime_error("Failed to create Images vector.");
+    }
+    images.resize(imageCount);
     vkGetSwapchainImagesKHR(device, swapChain, &imageCount, images.data());
 
     imageFormat = surfaceFormat.format;

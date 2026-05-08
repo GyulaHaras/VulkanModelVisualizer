@@ -13,7 +13,7 @@ struct QueueFamilyIndices {
 
 class Swapchain {
 public:
-    Swapchain();
+    // Swapchain();
     Swapchain(
         VkPhysicalDevice physicalDevice,
         VkDevice device,

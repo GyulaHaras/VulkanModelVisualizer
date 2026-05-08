@@ -66,8 +66,6 @@ void VulkanApp::createInstance(){
 	std::vector<const char*> extensions(glfwExtensions, 
 		glfwExtensions + glfwExtensionCount);
 
-	// TODO: Aparently this line is making the program hang by affecting surface creation.
-	// Be sure to add all of the extensions and not overwrite the vector/list of ext names.
 	if(enableValidationLayers){
 		extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 	}
@@ -100,7 +98,10 @@ void VulkanApp::createInstance(){
 	} else {
 		createInfo.enabledLayerCount = 0;
 	}
-	VkResult instanceResult = vkCreateInstance(&createInfo, nullptr, &instance);
+
+	instance = std::unique_ptr<VkInstance, VulkanDeleter>(new VkInstance(), VulkanDeleter(instance.get()));
+	VkResult instanceResult = vkCreateInstance(&createInfo, nullptr, instance.get());
+
 	std::cout << "Instance creation result code: " << instanceResult << std::endl;
 	if(instanceResult != VK_SUCCESS){
 		std::cout << "Instance creation error. " << instanceResult << std::endl;
@@ -109,36 +110,20 @@ void VulkanApp::createInstance(){
 }
 
 void VulkanApp::createSurface(){
-	// assert(surface == VK_NULL_HANDLE);
-	if(surface != VK_NULL_HANDLE){
-		std::cout << "Pre-existent Surface: " << surface << std::endl;
-		return;
-	}
-	VkResult windowResult = glfwCreateWindowSurface(instance, window, nullptr, &surface);
-	if(windowResult != VK_SUCCESS){
-		std::cout << "Surface creation error. " << windowResult << std::endl;
-		// throw std::runtime_error("Failure creating Window Surface.");
-		if (windowResult == VK_ERROR_NATIVE_WINDOW_IN_USE_KHR) {
-			// This usually means the window is already bound (from another surface in current run)
-			std::cerr << "Window surface found. Attempting re-creation." << std::endl;
-			// Destroy previous surface if you tracked it, or destroy window and recreate
-			vkDestroySurfaceKHR(instance, surface, nullptr);
-			windowResult = glfwCreateWindowSurface(instance, window, nullptr, &surface);
-			std::cout << "Surface creation status: " << windowResult << std::endl;
-		}
-	}
+	surface = std::unique_ptr<VkSurfaceKHR, VulkanDeleter>(new VkSurfaceKHR(), VulkanDeleter(instance.get(), surface.get()));
+	VkResult windowResult = glfwCreateWindowSurface(*instance.get(), window, nullptr, surface.get());
 }
 
 void VulkanApp::pickPhysicalDevice(){
 	uint32_t deviceCount = 0;
-	vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+	vkEnumeratePhysicalDevices(*instance, &deviceCount, nullptr);
 
 	if(deviceCount == 0){
 		throw std::runtime_error("Failed to find any GPUs.");
 	}
 	std::vector<VkPhysicalDevice> devices(deviceCount);
 
-	vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+	vkEnumeratePhysicalDevices(*instance.get(), &deviceCount, devices.data());
 
 	std::cout << "Physical devices list:" << std::endl;
 	for(const auto& dev : devices){
@@ -187,10 +172,10 @@ void VulkanApp::createLogicalDevice(){
 	<< std::endl;
 
 	VkResult deviceCreationResult; 
-	
+	device = std::unique_ptr<VkDevice, VulkanDeleter>(new VkDevice(), VulkanDeleter(device.get()));
 	try {
 		std::cout << "Creating logical device..." << std::endl;
-		deviceCreationResult = vkCreateDevice(physicalDevice, &createInfo, nullptr, &device);
+		deviceCreationResult = vkCreateDevice(physicalDevice, &createInfo, nullptr, device.get());
 		std::cout << "Logical device status: " << deviceCreationResult << std::endl;
 	} catch(VkResult& e){
 		std::cout << "Failed logical device creation. Error: " << e << std::endl;
@@ -200,7 +185,7 @@ void VulkanApp::createLogicalDevice(){
 		throw std::runtime_error("Failed creating logical device.");
 	}
 
-	vkGetDeviceQueue(device, 0, 0, &graphicsQueue);
+	vkGetDeviceQueue(*device.get(), 0, 0, &graphicsQueue);
 	if(graphicsQueue != VK_NULL_HANDLE){
 		std::cout << "Graphics queue found." << std::endl;
 	}
@@ -229,7 +214,7 @@ void VulkanApp::getFamilyIndices(){
 
 		std::cout << "Physical device: " << physicalDevice << " Surface: " << surface << std::endl;
 		
-		VkResult physicalDeviceSurfaceSupportStatus = vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface, &presentSupport);
+		VkResult physicalDeviceSurfaceSupportStatus = vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, *surface.get(), &presentSupport);
 		std::cout << "Physical Device Surface Support status: " << physicalDeviceSurfaceSupportStatus << std::endl;
 		std::cout << "Family: " << queueFamilies[i].queueFlags << " presentSuport: " << presentSupport << std::endl;
 		
@@ -248,26 +233,7 @@ void VulkanApp::getFamilyIndices(){
 }
 
 void VulkanApp::cleanup(){
-	std::cout << "General clean up starting.." << std::endl;
-	
-	// // TODO: Maybe not needed
-	// swapchain.cleanup();
-	
-	// vkDeviceWaitIdle(device);
-	// // TODO: As additional dependencies need to be free before vk devices destruction,
-	// // a procedure for streamlining the process may be necessary to avoid polluting the arguments
-	// if(swapchain != VK_TRUE){
-	// 	// std::cout << "Swapchain instance found. Starting clean up." << std::endl;
-	// 	swapchain.cleanup();
-	// }
-
-	// TODO: Consider destroying these inside of the swapchain destructors
-	vkDestroyDevice(device, nullptr);
-	vkDestroySurfaceKHR(instance, surface, nullptr);
-	vkDestroyInstance(instance, nullptr);
-
-	// glfwDestroyWindow(window);
-	// glfwTerminate();
+	std::cout << "VulkanApp instance clean up starting.." << std::endl;
 }
 
 VulkanApp::VulkanApp(GLFWwindow *window)
@@ -280,23 +246,19 @@ VulkanApp::VulkanApp(GLFWwindow *window)
 		}
 		pickPhysicalDevice();
 		createLogicalDevice();
-		// TODO: Define createImageViews and findQueueFamilies in Swapchain class
-		// QueueFamilyIndices indices = findQueueFamilies()
 		getFamilyIndices();
 
-		Swapchain swapchain(
+		swapchain = std::make_unique<Swapchain>(
 			physicalDevice,
-			device,
-			surface,
+			*device.get(),
+			*surface.get(),
 			indices,
 			window
 		);
-
-		// swapchain = swapchain2;
-
-		swapchain.create();
+		(*swapchain.get()).create();
 }
 
 VulkanApp::~VulkanApp(){
+	// TODO: Destroying functions are executed on smart pointer custom deleters. Consider deletion of the cleanup function if it is no needed for other Vulkan objects
 	cleanup();
 }
