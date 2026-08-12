@@ -58,6 +58,7 @@ int main() {
 			glfwPollEvents();
 			// glfwWaitEvents();
 			// std::this_thread::sleep_for(std::chrono::milliseconds(16));
+			application.drawFrame();
 		}
 		// TODO: For enforcing clean up sequence, call destructors from the top layer (up until now the swapchain)
 		// swapchain.cleanup();

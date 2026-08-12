@@ -35,3 +35,9 @@ cd VulkanModelVisualizer
 cmake -B build
 cmake --build build
 ```
+
+## Debug build
+For debugging purposes a Debug build type flag needs to be included with the cmake command
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+``` 

@@ -53,7 +53,7 @@ VkPresentModeKHR Swapchain::choosePresentMode(const std::vector<VkPresentModeKHR
 
 VkExtent2D Swapchain::chooseExtent(const VkSurfaceCapabilitiesKHR& capabilities, GLFWwindow* window){
     // TODO: Consider > instead of !=
-    if(capabilities.currentExtent.width != UINT32_MAX){
+    if(capabilities.currentExtent.width <= UINT32_MAX){
         return capabilities.currentExtent;
     } else {
         int width, height;
@@ -149,7 +149,7 @@ void Swapchain::createSwapchain(){
     SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice, surface);
     VkSurfaceFormatKHR surfaceFormat = chooseSurfaceFormat(swapChainSupport.formats);
     VkPresentModeKHR presentMode = choosePresentMode(swapChainSupport.presentModes);
-    VkExtent2D extent = chooseExtent(swapChainSupport.capabilities, window);
+    extent = chooseExtent(swapChainSupport.capabilities, window);
 
     // TODO: Are we triple buffering here?
     uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
@@ -199,7 +199,6 @@ void Swapchain::createSwapchain(){
     vkGetSwapchainImagesKHR(device, swapChain, &imageCount, images.data());
 
     imageFormat = surfaceFormat.format;
-    extent = extent;
 }
 
 void Swapchain::cleanup(){

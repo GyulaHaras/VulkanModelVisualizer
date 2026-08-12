@@ -1,0 +1,11 @@
+#!/bin/bash
+set +m #Disable job control monitoring
+
+if [[ -v VULKAN_SDK ]]; then
+    ("$VULKAN_SDK/bin/glslc" "$PWD/triangle.vert" -o "$PWD/triangle.vert.spv" &)
+    ("$VULKAN_SDK/bin/glslc" "$PWD/triangle.frag" -o "$PWD/triangle.frag.spv" &)
+    wait
+    echo "Spir-V shaders compiled."
+else
+    echo "Vulkan SDK not found."
+fi
