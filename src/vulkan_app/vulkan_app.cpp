@@ -174,7 +174,7 @@ void VulkanApp::createInstance(){
 		createInstanceInfo.enabledLayerCount = 0;
 	}
 
-	instance = std::unique_ptr<VkInstance, VulkanDeleter>(new VkInstance(), VulkanDeleter(instance.get()));
+	instance = std::unique_ptr<VkInstance, VulkanDeleter>(new VkInstance(), VulkanDeleter(instance.get(), &debugMessenger));
 	VkResult instanceResult = vkCreateInstance(&createInstanceInfo, nullptr, instance.get());
 
 	std::cout << "Instance creation result code: " << instanceResult << std::endl;

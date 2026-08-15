@@ -62,7 +62,7 @@ class VulkanApp {
         };
 
         struct VulkanDeleter{
-            VkDebugUtilsMessengerEXT debugMessenger;
+            VkDebugUtilsMessengerEXT *debugMessenger;
             VkInstance *instance;
             VkSurfaceKHR *surface;
             VkDevice *device;
@@ -74,7 +74,7 @@ class VulkanApp {
             VkDeviceMemory *vertexBufferMemory;
 
             VulkanDeleter(){}
-            VulkanDeleter(VkInstance *instance) : instance(instance) {}
+            VulkanDeleter(VkInstance *instance, VkDebugUtilsMessengerEXT *debugMessenger) : instance(instance),  debugMessenger(debugMessenger){}
             VulkanDeleter(VkDevice *device) : device(device) {}
             VulkanDeleter(VkInstance *instance, VkSurfaceKHR *surface) : instance(instance), surface(surface) {}
             VulkanDeleter(VkDevice *device, VkCommandPool *commandPool) : device(device), commandPool(commandPool){}
@@ -84,7 +84,7 @@ class VulkanApp {
             VulkanDeleter(VkDevice *device, VkFence *fence) : device(device), fence(fence){}
 
             void operator()(VkInstance *instance) const {
-                destroyDebugUtilsMessengerEXT(*instance, debugMessenger, nullptr);
+                destroyDebugUtilsMessengerEXT(*instance, *debugMessenger, nullptr);
                 vkDestroyInstance(*instance, nullptr);
             }
             void operator()(VkSurfaceKHR *surface) const {
