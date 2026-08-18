@@ -21,6 +21,13 @@ public:
         const QueueFamilyIndices& indices,
         GLFWwindow* window
     );
+    // Swapchain(
+    //     VkPhysicalDevice physicalDevice,
+    //     VkDevice device,
+    //     VkSurfaceKHR surface,
+    //     const QueueFamilyIndices& indices,
+    //     GLFWwindow* window
+    // ) : physicalDevice(physicalDevice), device(device), surface(surface), queueIndices(indices), window(window){};
     // TODO: Cleanup has to be called programmatically to avoid race conditions
     ~Swapchain();
 

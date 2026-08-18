@@ -61,84 +61,90 @@ class VulkanApp {
 
         };
 
-        struct VulkanDeleter{
-            VkDebugUtilsMessengerEXT *debugMessenger;
-            VkInstance *instance;
-            VkSurfaceKHR *surface;
-            VkDevice *device;
-            VkCommandPool *commandPool;
-            VkBuffer *buffer;
-            VkRenderPass *renderPass;
-            VkSemaphore *semaphore;
-            VkFence *fence;
-            VkDeviceMemory *vertexBufferMemory;
+        // struct VulkanDeleter{
+        //     VkDebugUtilsMessengerEXT *debugMessenger;
+        //     VkInstance *instance;
+        //     VkSurfaceKHR *surface;
+        //     VkDevice *device;
+        //     VkCommandPool *commandPool;
+        //     VkBuffer *buffer;
+        //     VkRenderPass *renderPass;
+        //     VkSemaphore *semaphore;
+        //     VkFence *fence;
+        //     VkDeviceMemory *vertexBufferMemory;
 
-            VulkanDeleter(){}
-            VulkanDeleter(VkInstance *instance, VkDebugUtilsMessengerEXT *debugMessenger) : instance(instance),  debugMessenger(debugMessenger){}
-            VulkanDeleter(VkDevice *device) : device(device) {}
-            VulkanDeleter(VkInstance *instance, VkSurfaceKHR *surface) : instance(instance), surface(surface) {}
-            VulkanDeleter(VkDevice *device, VkCommandPool *commandPool) : device(device), commandPool(commandPool){}
-            VulkanDeleter(VkDevice *device, VkBuffer *buffer, VkDeviceMemory *vertexBufferMemory) : device(device), buffer(buffer), vertexBufferMemory(vertexBufferMemory){}
-            VulkanDeleter(VkDevice *device, VkRenderPass *renderPass) : device(device), renderPass(renderPass){}
-            VulkanDeleter(VkDevice *device, VkSemaphore *semaphore) : device(device), semaphore(semaphore){}
-            VulkanDeleter(VkDevice *device, VkFence *fence) : device(device), fence(fence){}
+        //     VulkanDeleter(){}
+        //     VulkanDeleter(VkInstance *instance, VkDebugUtilsMessengerEXT *debugMessenger) : instance(instance),  debugMessenger(debugMessenger){}
+        //     VulkanDeleter(VkDevice *device) : device(device) {}
+        //     VulkanDeleter(VkInstance *instance, VkSurfaceKHR *surface) : instance(instance), surface(surface) {}
+        //     VulkanDeleter(VkDevice *device, VkCommandPool *commandPool) : device(device), commandPool(commandPool){}
+        //     VulkanDeleter(VkDevice *device, VkBuffer *buffer, VkDeviceMemory *vertexBufferMemory) : device(device), buffer(buffer), vertexBufferMemory(vertexBufferMemory){}
+        //     VulkanDeleter(VkDevice *device, VkRenderPass *renderPass) : device(device), renderPass(renderPass){}
+        //     VulkanDeleter(VkDevice *device, VkSemaphore *semaphore) : device(device), semaphore(semaphore){}
+        //     VulkanDeleter(VkDevice *device, VkFence *fence) : device(device), fence(fence){}
 
-            void operator()(VkInstance *instance) const {
-                destroyDebugUtilsMessengerEXT(*instance, *debugMessenger, nullptr);
-                vkDestroyInstance(*instance, nullptr);
-            }
-            void operator()(VkSurfaceKHR *surface) const {
-                vkDestroySurfaceKHR(*instance, *surface, nullptr);
-            }
-            void operator()(VkDevice *device) const {
-                vkDestroyDevice(*device, nullptr);
-            }
-            // Swapchain destructor handles its cleanup by a default deleter
-            void operator()(VkCommandPool *commandPool) const {
-                vkDestroyCommandPool(*device, *commandPool, nullptr);
-            }
-            // CommandBuffer
-            void operator()(VkCommandBuffer *commandBuffer){
-                vkDestroyBuffer(*device, *buffer, nullptr);
-                vkFreeMemory(*device, *vertexBufferMemory, nullptr);
-            } 
-            // Free memory
-            // Render Pass
-            void operator()(VkRenderPass *renderPass){
-                vkDestroyRenderPass(*device, *renderPass, nullptr);
-            }
+        //     void operator()(VkInstance *instance) const {
+        //         destroyDebugUtilsMessengerEXT(*instance, *debugMessenger, nullptr);
+        //         vkDestroyInstance(*instance, nullptr);
+        //     }
+        //     void operator()(VkSurfaceKHR *surface) const {
+        //         vkDestroySurfaceKHR(*instance, *surface, nullptr);
+        //     }
+        //     void operator()(VkDevice *device) const {
+        //         vkDestroyDevice(*device, nullptr);
+        //     }
+        //     // Swapchain destructor handles its cleanup by a default deleter
+        //     void operator()(VkCommandPool *commandPool) const {
+        //         vkDestroyCommandPool(*device, *commandPool, nullptr);
+        //     }
+        //     // CommandBuffer
+        //     void operator()(VkCommandBuffer *commandBuffer){
+        //         vkDestroyBuffer(*device, *buffer, nullptr);
+        //         vkFreeMemory(*device, *vertexBufferMemory, nullptr);
+        //     } 
+        //     // Free memory
+        //     // Render Pass
+        //     void operator()(VkRenderPass *renderPass){
+        //         vkDestroyRenderPass(*device, *renderPass, nullptr);
+        //     }
 
-            // Semaphore
-            void operator()(VkSemaphore *semaphore){
-                vkDestroySemaphore(*device, *semaphore, nullptr);
-            }
-            // Fence
-            void operator()(VkFence *fence){
-                vkDestroyFence(*device, *fence, nullptr);
-            }
-            // CommandPool
+        //     // Semaphore
+        //     void operator()(VkSemaphore *semaphore){
+        //         vkDestroySemaphore(*device, *semaphore, nullptr);
+        //     }
+        //     // Fence
+        //     void operator()(VkFence *fence){
+        //         vkDestroyFence(*device, *fence, nullptr);
+        //     }
+        //     // CommandPool
 
-        };
+        // };
 
         GLFWwindow *window;
         VkDebugUtilsMessengerEXT debugMessenger;
-        std::unique_ptr<VkInstance, VulkanDeleter> instance;
-        std::unique_ptr<VkSurfaceKHR, VulkanDeleter> surface;
+        // std::unique_ptr<VkInstance, VulkanDeleter> instance;
+        VkInstance instance;
+        // std::unique_ptr<VkSurfaceKHR, VulkanDeleter> surface;
+        VkSurfaceKHR surface;
         // std::unique_ptr<VkPhysicalDevice> physicalDevice = std::make_unique<VkPhysicalDevice>();
         VkPhysicalDevice physicalDevice;
-        std::unique_ptr<VkDevice, VulkanDeleter> device;
+        // std::unique_ptr<VkDevice, VulkanDeleter> device;
+        VkDevice device;
         // std::unique_ptr<VkQueue> graphicsQueue = std::make_unique<VkQueue>();
         VkQueue graphicsQueue;
         QueueFamilyIndices indices;
-        std::unique_ptr<Swapchain> swapchain;
+        // std::unique_ptr<Swapchain> swapchain;
+        std::optional<Swapchain> swapchain;
         std::vector<VkFramebuffer> swapchainFramebuffers;
-        std::unique_ptr<VkRenderPass, VulkanDeleter> renderPass;
+        // std::unique_ptr<VkRenderPass, VulkanDeleter> renderPass;
+        VkRenderPass renderPass;
         VkPipeline graphicsPipeline;
         // std::unique_ptr<VkPipelineLayout> pipelineLayout;
         // TODO: Move to its own class Ex. class RenderPipeline, etc...
         VkShaderModule vertShaderModule;    // TODO: Consider just a local variable
         VkShaderModule fragShaderModule;    // TODO: Consider just a local variable
-        std::unique_ptr<VkCommandPool, VulkanDeleter> commandPool;
+        // std::unique_ptr<VkCommandPool, VulkanDeleter> commandPool;
+        VkCommandPool commandPool;
         VkBuffer vertexBuffer;
         	// Vertex input info
 	    std::vector<Vertex> vertices;

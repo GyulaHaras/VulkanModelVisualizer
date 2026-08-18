@@ -174,8 +174,9 @@ void VulkanApp::createInstance(){
 		createInstanceInfo.enabledLayerCount = 0;
 	}
 
-	instance = std::unique_ptr<VkInstance, VulkanDeleter>(new VkInstance(), VulkanDeleter(instance.get(), &debugMessenger));
-	VkResult instanceResult = vkCreateInstance(&createInstanceInfo, nullptr, instance.get());
+	// instance = std::unique_ptr<VkInstance, VulkanDeleter>(new VkInstance(), VulkanDeleter(&instance, &debugMessenger));
+	instance = {};
+	VkResult instanceResult = vkCreateInstance(&createInstanceInfo, nullptr, &instance);
 
 	std::cout << "Instance creation result code: " << instanceResult << std::endl;
 	if(instanceResult != VK_SUCCESS){
@@ -184,7 +185,7 @@ void VulkanApp::createInstance(){
 	}
 	
 	createDebugUtilsMessengerEXT(
-		*instance,
+		instance,
 		&createMessengerInfo,
 		nullptr,
 		&debugMessenger
@@ -192,20 +193,21 @@ void VulkanApp::createInstance(){
 }
 
 void VulkanApp::createSurface(){
-	surface = std::unique_ptr<VkSurfaceKHR, VulkanDeleter>(new VkSurfaceKHR(), VulkanDeleter(instance.get(), surface.get()));
-	VkResult windowResult = glfwCreateWindowSurface(*instance.get(), window, nullptr, surface.get());
+	// surface = std::unique_ptr<VkSurfaceKHR, VulkanDeleter>(new VkSurfaceKHR(), VulkanDeleter(&instance, surface));
+	surface = {};
+	VkResult windowResult = glfwCreateWindowSurface(instance, window, nullptr, &surface);
 }
 
 void VulkanApp::pickPhysicalDevice(){
 	uint32_t deviceCount = 0;
-	vkEnumeratePhysicalDevices(*instance, &deviceCount, nullptr);
+	vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
 
 	if(deviceCount == 0){
 		throw std::runtime_error("Failed to find any GPUs.");
 	}
 	std::vector<VkPhysicalDevice> devices(deviceCount);
 
-	vkEnumeratePhysicalDevices(*instance.get(), &deviceCount, devices.data());
+	vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
 	std::cout << "Physical devices list:" << std::endl;
 	for(const auto& dev : devices){
@@ -254,10 +256,11 @@ void VulkanApp::createLogicalDevice(){
 	<< std::endl;
 
 	VkResult deviceCreationResult; 
-	device = std::unique_ptr<VkDevice, VulkanDeleter>(new VkDevice(), VulkanDeleter(device.get()));
+	// device = std::unique_ptr<VkDevice, VulkanDeleter>(new VkDevice(), VulkanDeleter(&device));
+	device = {};
 	try {
 		std::cout << "Creating logical device..." << std::endl;
-		deviceCreationResult = vkCreateDevice(physicalDevice, &createInfo, nullptr, device.get());
+		deviceCreationResult = vkCreateDevice(physicalDevice, &createInfo, nullptr, &device);
 		std::cout << "Logical device status: " << deviceCreationResult << std::endl;
 	} catch(VkResult& e){
 		std::cout << "Failed logical device creation. Error: " << e << std::endl;
@@ -267,7 +270,7 @@ void VulkanApp::createLogicalDevice(){
 		throw std::runtime_error("Failed creating logical device.");
 	}
 
-	vkGetDeviceQueue(*device.get(), 0, 0, &graphicsQueue);
+	vkGetDeviceQueue(device, 0, 0, &graphicsQueue);
 	if(graphicsQueue != VK_NULL_HANDLE){
 		std::cout << "Graphics queue found." << std::endl;
 	}
@@ -296,7 +299,7 @@ void VulkanApp::getFamilyIndices(){
 
 		std::cout << "Physical device: " << physicalDevice << " Surface: " << surface << std::endl;
 		
-		VkResult physicalDeviceSurfaceSupportStatus = vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, *surface.get(), &presentSupport);
+		VkResult physicalDeviceSurfaceSupportStatus = vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface, &presentSupport);
 		std::cout << "Physical Device Surface Support status: " << physicalDeviceSurfaceSupportStatus << std::endl;
 		std::cout << "Family: " << queueFamilies[i].queueFlags << " presentSuport: " << presentSupport << std::endl;
 		
@@ -316,7 +319,7 @@ void VulkanApp::getFamilyIndices(){
 
 void VulkanApp::createRenderPass(){
 	VkAttachmentDescription colorAttachment{};
-	colorAttachment.format = (*swapchain).getImageFormat();
+	colorAttachment.format = swapchain->getImageFormat();
 	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 
 	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -356,10 +359,10 @@ void VulkanApp::createRenderPass(){
 	renderPassInfo.pDependencies = &dependency;
 
 	VkResult createRenderPassResult = vkCreateRenderPass(
-		*device,
+		device,
 		&renderPassInfo,
 		nullptr,
-		renderPass.get()
+		&renderPass
 	);
 
 	if(createRenderPassResult != VK_SUCCESS){
@@ -397,7 +400,7 @@ VkShaderModule VulkanApp::createShaderModule(const std::vector<char>& shaderCode
 
 	VkShaderModule shaderModule;
 	if(vkCreateShaderModule(
-		*device,
+		device,
 		&createInfo,
 		nullptr,
 		&shaderModule
@@ -430,18 +433,18 @@ void VulkanApp::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemo
 	bufferInfo.usage = usage;
 	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-	vkCreateBuffer(*device, &bufferInfo, nullptr, &buffer);
+	vkCreateBuffer(device, &bufferInfo, nullptr, &buffer);
 
 	VkMemoryRequirements memRequirements;
-	vkGetBufferMemoryRequirements(*device, buffer, &memRequirements);
+	vkGetBufferMemoryRequirements(device, buffer, &memRequirements);
 
 	VkMemoryAllocateInfo memAllocInfo{};
 	memAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	memAllocInfo.allocationSize = size;
 	memAllocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
 
-	vkAllocateMemory(*device, &memAllocInfo, nullptr, &bufferMemory);
-	vkBindBufferMemory(*device, buffer, bufferMemory, 0);
+	vkAllocateMemory(device, &memAllocInfo, nullptr, &bufferMemory);
+	vkBindBufferMemory(device, buffer, bufferMemory, 0);
 }
 
 void VulkanApp::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex){
@@ -452,10 +455,10 @@ void VulkanApp::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imag
 	
 	VkRenderPassBeginInfo renderPassInfo{};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	renderPassInfo.renderPass = *renderPass;
+	renderPassInfo.renderPass = renderPass;
 	renderPassInfo.framebuffer = swapchainFramebuffers[imageIndex];
 	renderPassInfo.renderArea.offset = {0,0};
-	renderPassInfo.renderArea.extent = (*swapchain).getExtent();
+	renderPassInfo.renderArea.extent = swapchain->getExtent();
 
 	VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
 
@@ -483,7 +486,7 @@ void VulkanApp::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imag
 
 void VulkanApp::drawFrame(){
 	vkWaitForFences(
-		*device,
+		device,
 		1,
 		&inFlightFences[currentFrame],
 		VK_TRUE,
@@ -493,8 +496,8 @@ void VulkanApp::drawFrame(){
 	uint32_t imageIndex;
 
 	VkResult acquireNextImageResult =  vkAcquireNextImageKHR(
-		*device,
-		(*swapchain).get(),
+		device,
+		swapchain->get(),
 		UINT64_MAX,
 		imageAvailableSemaphores[currentFrame],
 		VK_NULL_HANDLE,
@@ -502,7 +505,7 @@ void VulkanApp::drawFrame(){
 	);
 
 	vkResetFences(
-		*device,
+		device,
 		1,
 		&inFlightFences[currentFrame]
 	);
@@ -549,7 +552,7 @@ void VulkanApp::drawFrame(){
 	presentInfo.waitSemaphoreCount = 1;
 	presentInfo.pWaitSemaphores = signalSemaphores;
 
-	VkSwapchainKHR swapchains[] = { (*swapchain).get() };
+	VkSwapchainKHR swapchains[] = { swapchain->get() };
 	presentInfo.swapchainCount = 1;
 	presentInfo.pSwapchains = swapchains;
 	presentInfo.pImageIndices = &imageIndex;
@@ -562,36 +565,34 @@ void VulkanApp::drawFrame(){
 }
 
 void VulkanApp::cleanup(){
-	std::cout << "VulkanApp instance clean up starting.." << std::endl;
+	// TODO: Consider moving the wait for GPU instruction here
+	std::cout << "VulkanApp instance cleanup starting.." << std::endl;
+	for(VkFramebuffer buffer : swapchainFramebuffers){
+		vkDestroyFramebuffer(device, buffer, nullptr);
+	}
+	vkFreeCommandBuffers(device, commandPool, commandBuffers.size(), commandBuffers.data());
+	vkDestroyPipeline(device, graphicsPipeline, nullptr);
+	// TODO: Destroy pipeline layouts
+	vkDestroyRenderPass(device, renderPass, nullptr);
+	// TODO: Destroy Samplers once implemented
+	// TODO: Destroy descriptor pools
+	// TODO: Destroy descriptor set layouts
 
-	        //     void operator()(VkInstance *instance) const {
-            //     vkDestroyInstance(*instance, nullptr);
-            // }
-            // void operator()(VkSurfaceKHR *surface) const {
-            //     vkDestroySurfaceKHR(*instance, *surface, nullptr);
-            // }
-            // void operator()(VkDevice *device) const {
-            //     vkDestroyDevice(*device, nullptr);
-            // }
-            // // Swapchain destructor handles its cleanup by a default deleter
-            // void operator()(VkCommandPool *commandPool) const {
-            //     vkDestroyCommandPool(*device, *commandPool, nullptr);
-            // }
-            // // CommandBuffer
-            // void operator()(VkCommandBuffer *commandBuffer){
-            //     vkDestroyBuffer(*device, *buffer, nullptr);
-            //     vkFreeMemory(*device, *vertexBufferMemory, nullptr);
-            // } 
-            // // Free memory
-
-            // // Semaphore
-            // void operator()(VkSemaphore *semaphore){
-            //     vkDestroySemaphore(*device, *semaphore, nullptr);
-            // }
-            // // Fence
-            // void operator()(VkFence *fence){
-            //     vkDestroyFence(*device, *fence, nullptr);
-            // }
+	// Semaphores may be of different sizes, so we iterate them separately
+	for(VkSemaphore semaphore : renderFinishedSemaphores){
+		vkDestroySemaphore(device, semaphore, nullptr);
+	}
+	for(VkSemaphore semaphore : imageAvailableSemaphores){
+		vkDestroySemaphore(device, semaphore, nullptr);
+	}
+	vkDestroyCommandPool(device, commandPool, nullptr);
+	// The Swapchain destructor calls the destruction funcionts for its SwapchainKHR and ImageViews
+	if(swapchain) swapchain.reset();
+	vkDestroyDevice(device, nullptr);
+	vkDestroySurfaceKHR(instance, surface, nullptr);
+	// Deferred vkDestroyDebugUtilsMessengerEXT
+	destroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
+	vkDestroyInstance(instance, nullptr);
 }
 
 VulkanApp::VulkanApp(GLFWwindow *window)
@@ -606,14 +607,17 @@ VulkanApp::VulkanApp(GLFWwindow *window)
 	createLogicalDevice();
 	getFamilyIndices();
 
-	swapchain = std::make_unique<Swapchain>(
+	swapchain.emplace(
 		physicalDevice,
-		*device.get(),
-		*surface.get(),
+		device,
+		surface,
 		indices,
 		window
 	);
-	(*swapchain.get()).create();
+	if(!swapchain){
+		throw std::runtime_error("Failed to initialize Swapchain container.");
+	}
+	swapchain->create();
 
 	// Vertex and Fragment shader stages info
 	std::vector<char> vertex_shader_buffer = loadSVShaders("triangle.vert.spv");
@@ -658,14 +662,14 @@ VulkanApp::VulkanApp(GLFWwindow *window)
 	VkViewport viewport{};
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
-	viewport.width = (float)(*swapchain).getExtent().width;
-	viewport.height = (float)(*swapchain).getExtent().height;
+	viewport.width = (float)swapchain->getExtent().width;
+	viewport.height = (float)swapchain->getExtent().height;
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 
 	VkRect2D scissor{};
 	scissor.offset = {0, 0};
-	scissor.extent = (*swapchain).getExtent();
+	scissor.extent = swapchain->getExtent();
 
 	VkPipelineViewportStateCreateInfo viewportState{};
 	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -712,7 +716,7 @@ VulkanApp::VulkanApp(GLFWwindow *window)
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	VkResult createPipelineLayoutResult = vkCreatePipelineLayout(
-		*device,
+		device,
 		&pipelineLayoutInfo,
 		nullptr,
 		&pipelineLayout
@@ -723,8 +727,9 @@ VulkanApp::VulkanApp(GLFWwindow *window)
 	}
 
 	// Render pass
-	//	instance = std::unique_ptr<VkInstance, VulkanDeleter>(new VkInstance(), VulkanDeleter(instance.get()));
-	renderPass = std::unique_ptr<VkRenderPass, VulkanDeleter>(new VkRenderPass(), VulkanDeleter(device.get(), renderPass.get()));
+	//	instance = std::unique_ptr<VkInstance, VulkanDeleter>(new VkInstance(), VulkanDeleter(&instance));
+	// renderPass = std::unique_ptr<VkRenderPass, VulkanDeleter>(new VkRenderPass(), VulkanDeleter(&device, &renderPass));
+	renderPass = {};
 	createRenderPass();
 	
 	// Graphics Pipeline
@@ -739,12 +744,12 @@ VulkanApp::VulkanApp(GLFWwindow *window)
 	pipelineInfo.pMultisampleState = &multisampling;
 	pipelineInfo.pColorBlendState = &colorBlending;
 	pipelineInfo.layout = pipelineLayout;
-	pipelineInfo.renderPass = *renderPass;
+	pipelineInfo.renderPass = renderPass;
 	pipelineInfo.subpass = 0;
 
 	graphicsPipeline = {};
 	VkResult createGraphicsPipelinesResult = vkCreateGraphicsPipelines(
-		*device,
+		device,
 		VK_NULL_HANDLE,
 		1,
 		&pipelineInfo,
@@ -756,24 +761,24 @@ VulkanApp::VulkanApp(GLFWwindow *window)
 	}
 
 	// Framebuffers
-	size_t imageViewsCount = (*swapchain).getImageViews().size();
+	size_t imageViewsCount = swapchain->getImageViews().size();
 
 	// std::vector<VkFramebuffer> swapChainFramebuffers;
 	swapchainFramebuffers.resize(imageViewsCount);
 	for(size_t i = 0; i < imageViewsCount; i++){
 		VkImageView attachments[] = {
-			(*swapchain).getImageViews()[i]
+			swapchain->getImageViews()[i]
 		};
 		VkFramebufferCreateInfo framebufferInfo{};
 		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		framebufferInfo.renderPass = *renderPass;
+		framebufferInfo.renderPass = renderPass;
 		framebufferInfo.attachmentCount = 1;
 		framebufferInfo.pAttachments = attachments;
-		framebufferInfo.width = (*swapchain).getExtent().width;
-		framebufferInfo.height = (*swapchain).getExtent().height;
+		framebufferInfo.width = swapchain->getExtent().width;
+		framebufferInfo.height = swapchain->getExtent().height;
 		framebufferInfo.layers = 1;
 		if(vkCreateFramebuffer(
-				*device,
+				device,
 				&framebufferInfo,
 				nullptr,
 				&swapchainFramebuffers[i]
@@ -784,11 +789,12 @@ VulkanApp::VulkanApp(GLFWwindow *window)
 	}
 
 	// Command Pool
-	commandPool = std::unique_ptr<VkCommandPool, VulkanDeleter>(new VkCommandPool(), VulkanDeleter(device.get()));
+	// commandPool = std::unique_ptr<VkCommandPool, VulkanDeleter>(new VkCommandPool(), VulkanDeleter(&device));
+	commandPool = {};
 	VkCommandPoolCreateInfo poolInfo{};
 	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	poolInfo.queueFamilyIndex = indices.graphicsFamily;
-	VkResult commandPoolCreationResult = vkCreateCommandPool(*device, &poolInfo, nullptr, commandPool.get());
+	VkResult commandPoolCreationResult = vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool);
 	if(commandPoolCreationResult != VK_SUCCESS){
 		throw std::runtime_error("Failed to create Command Pool.");
 	}
@@ -796,11 +802,11 @@ VulkanApp::VulkanApp(GLFWwindow *window)
 	// std::vector<VkCommandBuffer> commandBuffers;
 	commandBuffers.resize(swapchainFramebuffers.size());
 	VkCommandBufferAllocateInfo cmdBufferAllocInfo{};
-	cmdBufferAllocInfo.commandPool = *commandPool;
+	cmdBufferAllocInfo.commandPool = commandPool;
 	cmdBufferAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 	cmdBufferAllocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
 	if(vkAllocateCommandBuffers(
-		*device,
+		device,
 		&cmdBufferAllocInfo,
 		commandBuffers.data()
 	) != VK_SUCCESS){
@@ -830,18 +836,18 @@ VulkanApp::VulkanApp(GLFWwindow *window)
 
 	for(size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++){
 		if(vkCreateSemaphore(
-			*device,
+			device,
 			&semaphoreInfo,
 			nullptr,
 			&imageAvailableSemaphores[i]) != VK_SUCCESS ||
 			vkCreateSemaphore(
-				*device,
+				device,
 				&semaphoreInfo,
 				nullptr,
 				&renderFinishedSemaphores[i]
 			) != VK_SUCCESS ||
 			vkCreateFence(
-				*device,
+				device,
 				&fenceInfo,
 				nullptr,
 				&inFlightFences[i]
@@ -875,7 +881,7 @@ VulkanApp::VulkanApp(GLFWwindow *window)
 	void* data;
 
 	vkMapMemory(
-		*device,
+		device,
 		vertexBufferMemory,
 		0,
 		bufferSize,
@@ -884,13 +890,13 @@ VulkanApp::VulkanApp(GLFWwindow *window)
 	);
 
 	memcpy(data, vertices.data(), (size_t) bufferSize);
-	vkUnmapMemory(*device, vertexBufferMemory);
+	vkUnmapMemory(device, vertexBufferMemory);
 
 
 }
 
 VulkanApp::~VulkanApp(){
+	vkDeviceWaitIdle(device);
 	// TODO: Destroying functions are executed on smart pointer custom deleters. Consider deletion of the cleanup function if it is no needed for other Vulkan objects
 	cleanup();
-	vkDeviceWaitIdle(*device);
 }
