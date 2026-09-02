@@ -860,12 +860,52 @@ VulkanApp::VulkanApp(GLFWwindow *window)
 	//     vec2(-1.0, -1.0),
 //     vec2(3.0, -1.0),
 //     vec2(-1.0, 3.0)
+tinyobj::ObjReader reader;
+std::string modelFileName = "cube.obj";
+fs::path modelsPath = {MODELS_DIR};
+fs::path fullModelPath = modelsPath / modelFileName;
+
+if(!reader.ParseFromFile(fullModelPath)){
+	std::runtime_error("Unable to read model .obj file.");
+}
+
+const auto& attrib = reader.GetAttrib();
+const auto& shapes = reader.GetShapes();
+
+//Mesh mesh = loadOBJ("models/cube.obj");
 	// Vertex input info
-	vertices = {
-		{{0.0f, 0.5f}, {1.0f, 0.0f, 0.0f}},
-		{{0.5f, -0.5f}, {.0f, 1.0f, 0.0f}},
-		{{-0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}}
-	};
+	// vertices = {
+	// 	{{0.0f, 0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
+	// 	{{0.5f, -0.5f, 0.0f}, {.0f, 1.0f, 0.0f}},
+	// 	{{-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}}
+	// };
+
+	// TODO: Consider different size color vector
+	tinyobj::mesh_t mesh = shapes[0].mesh;
+	vertices.resize(mesh.indices.size()/3);
+	void* indices_data_ptr = mesh.indices.data();
+	// uint32_t* index_array = reinterpret_cast<uint32_t*>(indices_data_ptr);
+
+	Vertex transformed_vertex = {{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f}};
+	// for(int i=0; i < vertices.size();i++){
+	int32_t t_index = 0;
+	for(const  tinyobj::index_t index : mesh.indices){
+		transformed_vertex.pos = {
+			attrib.vertices[index.vertex_index*3],
+			attrib.vertices[index.vertex_index*3+1],
+			attrib.vertices[index.vertex_index*3+2]
+		};
+		transformed_vertex.color = {
+			attrib.colors[index.vertex_index*3],
+			attrib.colors[index.vertex_index*3+1],
+			attrib.colors[index.vertex_index*3+2]
+		};
+		// vertex_index =static_cast<uint32_t>((((shapes)[0]).mesh).indices[i]);
+		// (((shapes)[0]).mesh).indices
+		// vertex_index = reinterpret_cast<uint32_t*>(vertices_data_ptr);
+		// vertices[i] = {static_cast<glm::vec3>(attrib.vertices[index_array[i]]), static_cast<glm::vec3>(attrib.colors[i])};
+		vertices[t_index++] = transformed_vertex;
+	}
 
 	// Vertex Buffer
 	vertexBuffer = {};

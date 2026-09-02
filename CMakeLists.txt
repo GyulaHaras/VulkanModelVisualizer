@@ -28,6 +28,12 @@ FetchContent_Declare(
     GIT_TAG 3.3.10
 )
 FetchContent_MakeAvailable(glfw)
+FetchContent_Declare(
+    tinyobjloader
+    GIT_REPOSITORY  https://github.com/tinyobjloader/tinyobjloader.git
+    GIT_TAG release
+)
+FetchContent_MakeAvailable(tinyobjloader)
 
 # Main Target Source and Executable
 
@@ -117,6 +123,7 @@ target_link_libraries(ModelVisualizerVulkanApp
         OpenGL::GL
         Vulkan::Vulkan
         glfw
+        tinyobjloader
 )
 
 target_link_libraries(ModelVisualizerSwapchain
