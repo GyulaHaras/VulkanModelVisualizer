@@ -58,11 +58,20 @@ class VulkanApp {
                 attributes[1].offset = offsetof(Vertex, color);
 
                 return attributes;
-            };
+            }
 
+
+            friend Vertex operator*(const Vertex& lhs, float rhs){
+                return Vertex{(glm::vec3)lhs.pos * rhs, lhs.color};
+            }
+
+
+            friend Vertex operator*(const Vertex& lhs, glm::vec3 rhs){
+                return Vertex{(glm::vec3)lhs.pos * rhs, lhs.color};
+            }
         };
 
-        // struct VulkanDeleter{
+        // struct VulkconstanDeleter{
         //     VkDebugUtilsMessengerEXT *debugMessenger;
         //     VkInstance *instance;
         //     VkSurfaceKHR *surface;

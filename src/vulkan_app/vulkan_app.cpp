@@ -861,7 +861,7 @@ VulkanApp::VulkanApp(GLFWwindow *window)
 //     vec2(3.0, -1.0),
 //     vec2(-1.0, 3.0)
 tinyobj::ObjReader reader;
-std::string modelFileName = "cube.obj";
+std::string modelFileName = "suzanne.obj";
 fs::path modelsPath = {MODELS_DIR};
 fs::path fullModelPath = modelsPath / modelFileName;
 
@@ -880,9 +880,18 @@ const auto& shapes = reader.GetShapes();
 	// 	{{-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}}
 	// };
 
+	// vertices = {
+	// 	{{0.0f, 0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
+	// 	{{0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
+	// 	{{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
+	// 	{{-0.5f, 0.5f, 0.9f}, {0.0f, 1.0f, 0.0f}},
+	// 	{{0.5f, 0.5f, 0.9f}, {0.0f, 1.0f, 0.0f}},
+	// 	{{0.0f, -0.5f, 0.9f}, {0.0f, 1.0f, 0.0f}}
+	// };
+
 	// TODO: Consider different size color vector
 	tinyobj::mesh_t mesh = shapes[0].mesh;
-	vertices.resize(mesh.indices.size()/3);
+	vertices.resize(mesh.indices.size());
 	void* indices_data_ptr = mesh.indices.data();
 	// uint32_t* index_array = reinterpret_cast<uint32_t*>(indices_data_ptr);
 
@@ -906,6 +915,29 @@ const auto& shapes = reader.GetShapes();
 		// vertices[i] = {static_cast<glm::vec3>(attrib.vertices[index_array[i]]), static_cast<glm::vec3>(attrib.colors[i])};
 		vertices[t_index++] = transformed_vertex;
 	}
+
+	float scalar = 0.9f;
+	glm::vec3 scale_vector = glm::vec3(1.0f, 1.0f, 1.0f)*scalar;
+
+	// std::transform(
+	// 	vertices.begin(),
+	// 	vertices.end(),
+	// 	vertices.begin(),
+	// 	[scalar](Vertex& v){
+	// 		v = v * scalar;
+	// 		return v;
+	// 	}
+	// );
+
+	std::transform(
+		vertices.begin(),
+		vertices.end(),
+		vertices.begin(),
+		[scale_vector](Vertex& v){
+			v = v * scale_vector;
+			return v;
+		}
+	);
 
 	// Vertex Buffer
 	vertexBuffer = {};

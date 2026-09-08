@@ -200,7 +200,7 @@ void print_objModel() {
 			token = strtok_tsafe(line, delim, &next_token);
 			vec3 vertex = {0.0, 0.0, 0.0};
 			vec2 texture_pos = {0.0, 0.0};
-			face current_face = {&vertex, &vertex, &texture_pos};
+			face current_face = {};
 			// Check if there is enough space for more vertices, if not realloc
 			printf("%d/%d \n", vertices_current_size, vertices_alloc_size);
 
