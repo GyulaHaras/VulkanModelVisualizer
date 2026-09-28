@@ -25,8 +25,18 @@ class VulkanApp {
         void createRenderPass();
         static std::vector<char> loadSVShaders(const std::string &filename);
         VkShaderModule createShaderModule(const std::vector<char>& shaderCode);
+
+        std::array<VkPipelineShaderStageCreateInfo, 2> createShaderStages(std::string shaderFilename);
+        VkPipelineVertexInputStateCreateInfo createVertexInputStateInfo(VkVertexInputBindingDescription& bindingDescription, std::array<VkVertexInputAttributeDescription, 2>& attributeDescriptions);
+        VkPipelineViewportStateCreateInfo createViewportStateInfo(VkViewport& viewport, VkRect2D& scissor);
+        
+        void createGraphicsPipeline ();
+        void createSyncronizationObjects();
+        void loadObjToVector(const std::string& filename);
         void createFramebuffer();
-        VkCommandBuffer createCommandBuffers();
+        void createCommandBuffers();
+
+        void transformVertices();
         uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
         void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory);
         void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
@@ -70,65 +80,6 @@ class VulkanApp {
                 return Vertex{(glm::vec3)lhs.pos * rhs, lhs.color};
             }
         };
-
-        // struct VulkconstanDeleter{
-        //     VkDebugUtilsMessengerEXT *debugMessenger;
-        //     VkInstance *instance;
-        //     VkSurfaceKHR *surface;
-        //     VkDevice *device;
-        //     VkCommandPool *commandPool;
-        //     VkBuffer *buffer;
-        //     VkRenderPass *renderPass;
-        //     VkSemaphore *semaphore;
-        //     VkFence *fence;
-        //     VkDeviceMemory *vertexBufferMemory;
-
-        //     VulkanDeleter(){}
-        //     VulkanDeleter(VkInstance *instance, VkDebugUtilsMessengerEXT *debugMessenger) : instance(instance),  debugMessenger(debugMessenger){}
-        //     VulkanDeleter(VkDevice *device) : device(device) {}
-        //     VulkanDeleter(VkInstance *instance, VkSurfaceKHR *surface) : instance(instance), surface(surface) {}
-        //     VulkanDeleter(VkDevice *device, VkCommandPool *commandPool) : device(device), commandPool(commandPool){}
-        //     VulkanDeleter(VkDevice *device, VkBuffer *buffer, VkDeviceMemory *vertexBufferMemory) : device(device), buffer(buffer), vertexBufferMemory(vertexBufferMemory){}
-        //     VulkanDeleter(VkDevice *device, VkRenderPass *renderPass) : device(device), renderPass(renderPass){}
-        //     VulkanDeleter(VkDevice *device, VkSemaphore *semaphore) : device(device), semaphore(semaphore){}
-        //     VulkanDeleter(VkDevice *device, VkFence *fence) : device(device), fence(fence){}
-
-        //     void operator()(VkInstance *instance) const {
-        //         destroyDebugUtilsMessengerEXT(*instance, *debugMessenger, nullptr);
-        //         vkDestroyInstance(*instance, nullptr);
-        //     }
-        //     void operator()(VkSurfaceKHR *surface) const {
-        //         vkDestroySurfaceKHR(*instance, *surface, nullptr);
-        //     }
-        //     void operator()(VkDevice *device) const {
-        //         vkDestroyDevice(*device, nullptr);
-        //     }
-        //     // Swapchain destructor handles its cleanup by a default deleter
-        //     void operator()(VkCommandPool *commandPool) const {
-        //         vkDestroyCommandPool(*device, *commandPool, nullptr);
-        //     }
-        //     // CommandBuffer
-        //     void operator()(VkCommandBuffer *commandBuffer){
-        //         vkDestroyBuffer(*device, *buffer, nullptr);
-        //         vkFreeMemory(*device, *vertexBufferMemory, nullptr);
-        //     } 
-        //     // Free memory
-        //     // Render Pass
-        //     void operator()(VkRenderPass *renderPass){
-        //         vkDestroyRenderPass(*device, *renderPass, nullptr);
-        //     }
-
-        //     // Semaphore
-        //     void operator()(VkSemaphore *semaphore){
-        //         vkDestroySemaphore(*device, *semaphore, nullptr);
-        //     }
-        //     // Fence
-        //     void operator()(VkFence *fence){
-        //         vkDestroyFence(*device, *fence, nullptr);
-        //     }
-        //     // CommandPool
-
-        // };
 
         GLFWwindow *window;
         VkDebugUtilsMessengerEXT debugMessenger;
