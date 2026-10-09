@@ -5,6 +5,7 @@
 #include <fstream>
 #include <filesystem>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <vulkan/vulkan.hpp>
 #include <GLFW/glfw3.h>
 #include <tiny_obj_loader.h>
@@ -27,10 +28,17 @@ class VulkanApp {
         VkShaderModule createShaderModule(const std::vector<char>& shaderCode);
 
         std::array<VkPipelineShaderStageCreateInfo, 2> createShaderStages(std::string shaderFilename);
-        VkPipelineVertexInputStateCreateInfo createVertexInputStateInfo(VkVertexInputBindingDescription& bindingDescription, std::array<VkVertexInputAttributeDescription, 2>& attributeDescriptions);
+        VkPipelineVertexInputStateCreateInfo createVertexInputStateInfo(VkVertexInputBindingDescription& bindingDescription, std::array<VkVertexInputAttributeDescription, 3>& attributeDescriptions);
         VkPipelineViewportStateCreateInfo createViewportStateInfo(VkViewport& viewport, VkRect2D& scissor);
         
+        void createDescriptorSetLayout();
         void createGraphicsPipeline ();
+        void createUniformBuffers();
+        void updateUniformBuffer(uint32_t currentFrame);
+        void createDescriptorPool();
+        void createDescriptorSets();
+        void updateDescriptorSets();
+
         void createSyncronizationObjects();
         void loadObjToVector(const std::string& filename);
         void createFramebuffer();
@@ -45,6 +53,7 @@ class VulkanApp {
         struct Vertex {
             glm::vec3 pos;
             glm::vec3 color;
+            glm::vec3 normal;
 
             static VkVertexInputBindingDescription getBindingDescription(){
                 VkVertexInputBindingDescription bindingDescription{};
@@ -54,8 +63,8 @@ class VulkanApp {
                 return bindingDescription;
             }
 
-            static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions(){
-                std::array<VkVertexInputAttributeDescription, 2> attributes{};
+            static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions(){
+                std::array<VkVertexInputAttributeDescription, 3> attributes{};
 
                 attributes[0].binding = 0;
                 attributes[0].location = 0;
@@ -66,6 +75,11 @@ class VulkanApp {
                 attributes[1].location = 1;
                 attributes[1].format = VK_FORMAT_R32G32B32_SFLOAT;
                 attributes[1].offset = offsetof(Vertex, color);
+
+                attributes[2].binding = 0;
+                attributes[2].location = 2;
+                attributes[2].format = VK_FORMAT_R32G32B32_SFLOAT;
+                attributes[2].offset = offsetof(Vertex, normal);
 
                 return attributes;
             }
@@ -79,6 +93,12 @@ class VulkanApp {
             friend Vertex operator*(const Vertex& lhs, glm::vec3 rhs){
                 return Vertex{(glm::vec3)lhs.pos * rhs, lhs.color};
             }
+        };
+
+        struct UniformBufferObject {
+            glm::mat4 model;
+            glm::mat4 view;
+            glm::mat4 proj;
         };
 
         GLFWwindow *window;
@@ -99,7 +119,15 @@ class VulkanApp {
         std::vector<VkFramebuffer> swapchainFramebuffers;
         // std::unique_ptr<VkRenderPass, VulkanDeleter> renderPass;
         VkRenderPass renderPass;
+        VkPipelineLayout pipelineLayout;
         VkPipeline graphicsPipeline;
+
+        VkDescriptorSetLayout descriptorSetLayout = VK_NULL_HANDLE;
+        std::vector<VkBuffer> uniformBuffers;
+        std::vector<VkDeviceMemory> uniformBuffersMemory;
+        VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
+        std::vector<VkDescriptorSet> descriptorSets;
+
         // std::unique_ptr<VkPipelineLayout> pipelineLayout;
         // TODO: Move to its own class Ex. class RenderPipeline, etc...
         VkShaderModule vertShaderModule;    // TODO: Consider just a local variable
