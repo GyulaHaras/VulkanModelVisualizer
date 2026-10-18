@@ -41,3 +41,7 @@ For debugging purposes a Debug build type flag needs to be included with the cma
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 ``` 
+
+## Current state
+The current state of the project renders a hard-coded lambert shader with fixed lighting.
+![Basic 3D model with a rudimentary Lambert lighting](images/suzanne_lambert_noTexture.png)

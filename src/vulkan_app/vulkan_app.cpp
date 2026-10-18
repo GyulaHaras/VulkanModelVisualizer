@@ -1132,7 +1132,8 @@ VulkanApp::VulkanApp(GLFWwindow *window)
 
 	loadObjToVector("suzanne.obj");
 
-	transformVertices();
+	// TODO: Needs to be updated to transform normals as well. Consider refactoring the function to accept a transformation matrix and apply it to both vertices and normals.
+	// transformVertices();
 
 	// Vertex Buffer
 	vertexBuffer = {};
