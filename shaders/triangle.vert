@@ -12,13 +12,19 @@ layout (std140, binding = 0) uniform UBO {
     mat4 model;
     mat4 view;
     mat4 proj;
+
+    vec4 cameraPos;
+    vec4 lightPos;
+    vec4 lightColor;
 } m;
 
 void main(){
     vec4 worldPos = m.model * vec4(inPos, 1.0);
 
     fragPos = worldPos.xyz;
-    fragNormal = mat3(m.model)*inNormal;
+
+    mat3 normalMatrix = transpose(inverse(mat3(m.model)));
+    fragNormal = normalMatrix*inNormal;
     fragColor = inColor;
 
     gl_Position = m.proj*m.view*worldPos;
